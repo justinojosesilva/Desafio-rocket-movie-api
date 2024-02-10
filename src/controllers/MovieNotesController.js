@@ -5,8 +5,9 @@ class MovieNotesController {
 
   async show(request, response) {
     const { id } = request.params 
-    const movie = await knex("movie_notes").where({ id }).first()
-    const tags = await knex("movie_tags").where({ note_id: id }).orderBy("name")
+    const { id:user_id } = request.user
+    const movie = await knex("movie_notes").where({ id, user_id }).first()
+    const tags = await knex("movie_tags").where({ note_id: id, user_id }).orderBy("name")
 
     return response.json({
       ...movie,
@@ -15,7 +16,8 @@ class MovieNotesController {
   }
 
   async index(request, response) {
-    const { user_id, title, tags } = request.query 
+    const { title, tags } = request.query 
+    const user_id = request.user.id   
 
     let movies 
 
@@ -51,7 +53,7 @@ class MovieNotesController {
 
   async create(request, response) {
     const { title, description, rating, tags } = request.body 
-    const { user_id } = request.params 
+    const { id:user_id } = request.user 
 
     const [ note_id ] = await knex("movie_notes").insert({
       title,
@@ -64,6 +66,37 @@ class MovieNotesController {
       return {
         name,
         note_id,
+        user_id
+      }      
+    })
+    await knex("movie_tags").insert(tagsInsert)
+
+    return response.json()
+  }
+
+  async update(request, response) {
+    const user_id = request.user.id
+    const { id } = request.params
+    const { title, rating, description, tags } = request.body
+
+    const movie = await knex('movie_notes').where({ id }).first()
+
+    if(!movie) {
+      throw new AppError('Filme não encontrado')
+    }
+
+    movie.title = title ?? movie.title
+    movie.rating = rating ?? movie.rating
+    movie.description = description ?? movie.description
+
+    await knex("movie_notes").update(movie).where({ id })
+
+    await knex("movie_tags").where({ note_id: id }).delete()
+
+    const tagsInsert = tags.map(name => {
+      return {
+        name,
+        note_id: id,
         user_id
       }      
     })

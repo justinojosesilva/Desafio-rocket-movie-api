@@ -10,7 +10,7 @@ class UsersController {
   }
 
   async show(request, response) {
-    const { id } = request.params 
+    const { id } = request.user 
     const user = await knex('users').where({ id }).first()
     if(!user) {
       throw new AppError("Usuário não encontrado.")
@@ -38,7 +38,7 @@ class UsersController {
 
   async update(request, response) {
     const { name, email, password, old_password } = request.body 
-    const { id } = request.params 
+    const { id } = request.user 
 
     const user = await knex('users').where({ id }).first()
 
@@ -75,7 +75,7 @@ class UsersController {
   }
 
   async delete(request, response) {
-    const { id } = request.params 
+    const { id } = request.user 
     await knex('users').where({ id }).delete()
     return response.json()
   }
