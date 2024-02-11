@@ -1,5 +1,6 @@
 require('express-async-errors')
-const PORT = 3333
+require('dotenv/config')
+const PORT = process.env.PORT || 3333
 const AppError = require('./utils/AppError')
 const uploadConfig = require('./configs/upload')
 const express = require('express')
